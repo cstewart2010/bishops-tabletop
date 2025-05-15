@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bishops Tabletop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+</head>
+<body class="bg-light d-flex flex-column min-vh-100 text-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark"><div class="container"><a class="navbar-brand" href="https://cstewart2010.github.io">Charles Stewart </a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button><div id="nav" class="collapse navbar-collapse"><ul class="navbar-nav me-auto mb-2 mb-lg-0"><li class="nav-item"><a class="nav-link" href="https://www.linkedin.com/in/charles-stewart-5a254182/" target="_blank" rel="noopener noreferrer">Linkedin</a></li><li class="nav-item"><a class="nav-link" href="https://github.com/cstewart2010" target="_blank" rel="noopener noreferrer">Github</a></li><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Projects</a><ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="https://pta-frontend.pages.dev/" target="_blank" rel="noopener noreferrer">Pokemon Tabletop Adventures WebApp</a></li><li><a class="dropdown-item" href="https://cstewart2010.github.io/verble">Verble</a></li><li><a class="dropdown-item" href="https://cstewart2010.github.io/taxEstimator">Tax Estimator</a></li><li><a class="dropdown-item" href="https://cstewart2010.github.io/shiny-calculator">Pokemon Shiny Calculator</a></li></ul></li></ul></div></div></nav>
+    <div class="form-control">
+        <label for="difficulty" class="form-label">Difficulty</label>
+        <input type="range" class="form-range" min="0" max="20" id="difficulty" onchange="setResolution()">
+        <label for="stat1" class="form-label">Stat1</label>
+        <input type="range" class="form-range" min="0" max="20" id="stat1" onchange="setResolution()">
+        <label for="stat2" class="form-label">Stat2</label>
+        <input type="range" class="form-range" min="0" max="20" id="stat2" onchange="setResolution()">
+        <label for="powerLevel" class="form-label">Power Level</label>
+        <input type="range" class="form-range" min="0" max="20" id="powerLevel" onchange="setResolution()">
+        <label for="advantages" class="form-label">Advantages</label>
+        <input type="range" class="form-range" min="0" max="20" id="advantages" onchange="setResolution()">
+        <label for="disadvantages" class="form-label">Disadvantages</label>
+        <input type="range" class="form-range" min="0" max="20" id="disadvantages" onchange="setResolution()">
+        <label for="tags" class="form-label">Tags</label>
+        <input type="range" class="form-range" min="0" max="3" id="tags" onchange="setResolution()">
+        <button type="button" class="btn btn-primary" onclick="setResolution()">Evaluate</button>
+    </div>
+    <div id="resolution">
+
+    </div>
+    <div class="row">
+        <div class="col-9">Sum of Base Rolls</div>
+        <div class="col" id="baseSum"></div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-9">Base Rolls</div>
+        <div class="col" id="baseRolls"></div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-9">Advantage Bonus</div>
+        <div class="col" id="bonus"></div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-9">Advantage Rolls</div>
+        <div class="col" id="advantageRolls"></div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-9">Advantage Matches</div>
+        <div class="col" id="matches"></div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-9">Result</div>
+        <div class="col" id="result"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
+    <script>
+        function setResolution() {
+            options = {
+                difficulty: Number(document.querySelector("#difficulty").value),
+                stat1: Number(document.querySelector("#stat1").value),
+                stat2: Number(document.querySelector("#stat2").value),
+                powerLevel: Number(document.querySelector("#powerLevel").value),
+                advantages: Number(document.querySelector("#advantages").value),
+                disadvantages: Number(document.querySelector("#disadvantages").value),
+                tags: []
+            }
+            for (let i = 0; i < document.querySelector("#tags").value; i++){
+                options.tags.push(2);
+            }
+            console.log(options);
+            const targetNumber = 10 + options.difficulty;
+            console.log("Performing initial rolls");
+            const rolls = rollD10(2);
+            let roll = sum(rolls) + options.stat1 + options.stat2 + options.powerLevel + sum(options.tags ?? []);
+            var advantageResult = getAdvantageResult(options);
+            roll += advantageResult.score;
+            resolution = {
+                rolls,
+                totalRollValue: roll,
+                targetNumber,
+                advantageResult,
+                degree: roll === targetNumber ? 1 : roll - targetNumber,
+                critical: rolls[0] == rolls[1],
+                success: roll >= targetNumber
+            }
+            console.log(resolution);
+            document.querySelector("#baseSum").textContent = sum(rolls);
+            document.querySelector("#baseRolls").textContent = resolution.rolls;
+            document.querySelector("#bonus").textContent = resolution.advantageResult.score;
+            document.querySelector("#advantageRolls").textContent = resolution.advantageResult.rolls;
+            document.querySelector("#matches").textContent = resolution.advantageResult.dupeCount;
+            document.querySelector("#result").textContent = resolution.totalRollValue;
+            const resolutionDiv = document.querySelector("#resolution");
+            resolutionDiv.innerHTML = null;
+            const div = document.createElement("div");
+            if (resolution.success){
+                if (resolution.critical){
+                    div.classList.add("h3")
+                    div.innerText = "Critical Success!!"
+                }
+                else {
+                    div.innerText = "Success"
+                }
+            }
+            else{
+                if (resolution.critical){
+                    div.classList.add("h3")
+                    div.innerText = "Dramatic Failure!!"
+                }
+                else {
+                    div.innerText = "Failure"
+                }
+            }
+            resolutionDiv.append(div);
+        }
+
+        /**
+         * @type {Resolution}
+         */
+        var resolution
+
+        /**
+         * @typedef RollOptions
+         * @property {number} difficulty
+         * @property {number} stat1
+         * @property {number} stat2
+         * @property {number} powerLevel
+         * @property {number[]?} tags
+         * @property {number} advantages
+         * @property {number} disadvantages
+         */
+
+        /**
+         * @typedef AdvantageResult
+         * @prop {number[]} rolls
+         * @prop {number} score
+         * @prop {number} dupeCount
+         */
+
+        /**
+         * @typedef Resolution
+         * @prop {AdvantageResult} advantageResult
+         * @prop {number[]} rolls
+         * @prop {number} targetNumber
+         * @prop {number} totalRollValue
+         * @prop {number} degree
+         * @prop {boolean} critical
+         * @prop {boolean} success
+         */
+
+        /**
+         * @type {RollOptions}
+         */
+        var options = {}
+
+        /**
+         * 
+         * @param {RollOptions} options 
+         * @returns {AdvantageResult}
+         */
+        const getAdvantageResult = (options) => {
+            const differenceResult = options.advantages - options.disadvantages;
+            if ((options.advantages == 0 && options.disadvantages == 0) || differenceResult == 0)
+            {
+                return  {
+                    rolls: [],
+                    score: 0,
+                    dupeCount: 0
+                }
+            }
+
+            const count = Math.abs(differenceResult) > 5
+            ? 5
+            : differenceResult < 0
+                ? -differenceResult
+                : differenceResult;
+            
+            const rolls = rollD6(count);
+            console.log("Performing advantage rolls");
+            const sumRolls = sum(rolls);
+            var dupeCount = 0;
+            for (var i = 1; i <= 6; i++){
+                const dupeI = rolls.filter(x => x == i).length;
+                if (dupeI > 1)
+                {
+                    dupeCount += dupeI;
+                }
+            }
+
+            const score = sumRolls + dupeCount;
+            return {
+                rolls,
+                dupeCount,
+                score: differenceResult < 0 ? -score: score
+            }
+        }
+
+        /**
+         * 
+         * @param {number} count 
+         * @returns {number[]}
+         */
+        const rollD2 = (count) => roll(count, 2);
+
+        /**
+         * 
+         * @param {number} count 
+         * @returns {number[]}
+         */
+        const rollD4 = (count) => roll(count, 4);
+
+        /**
+         * 
+         * @param {number} count 
+         * @returns {number[]}
+         */
+        const rollD6 = (count) => roll(count, 6);
+
+        /**
+         * 
+         * @param {number} count 
+         * @returns {number[]}
+         */
+        const rollD8 = (count) => roll(count, 8);
+
+        /**
+         * 
+         * @param {number} count 
+         * @returns {number[]}
+         */
+        const rollD10 = (count) => roll(count, 10);
+
+        /**
+         * 
+         * @param {number} count 
+         * @returns {number[]}
+         */
+        const rollD12 = (count) => roll(count, 12);
+
+        /**
+         * 
+         * @param {number} count 
+         * @returns {number[]}
+         */
+        const rollD20 = (count) => roll(count, 20);
+
+        /**
+         * 
+         * @param {number} count 
+         * @param {number} dice 
+         * @returns {number[]}
+         */
+        const roll = (count, dice) => {
+            console.log(`Rolling ${count}d${dice}`);
+            var result = [];
+            for (var i = 0; i < count; i++){
+                const roll = Math.ceil(Math.random() * dice);
+                console.log(`Rolled a ${roll}`);
+                result.push(roll);
+            }
+
+            return result;
+        }
+
+        /**
+         * 
+         * @param {number[]} rolls 
+         * @returns {number}
+         */
+        const sum = (rolls) => {
+            var result = 0;
+            for (const x of rolls){
+                result += x;
+            }
+
+            return result;
+        }
+    </script>
+</body>
+</html>
