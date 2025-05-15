@@ -39,6 +39,11 @@
     </div>
     <br>
     <div class="row">
+        <div class="col-9">Advantage Base Value</div>
+        <div class="col" id="advantageBase"></div>
+    </div>
+    <br>
+    <div class="row">
         <div class="col-9">Advantage Bonus</div>
         <div class="col" id="bonus"></div>
     </div>
@@ -96,6 +101,7 @@
             document.querySelector("#baseSum").textContent = sum(rolls);
             document.querySelector("#baseRolls").textContent = resolution.rolls;
             document.querySelector("#bonus").textContent = resolution.advantageResult.score;
+            document.querySelector("#advantageBase").textContent = resolution.advantageResult.largest;
             document.querySelector("#advantageRolls").textContent = resolution.advantageResult.rolls;
             document.querySelector("#matches").textContent = resolution.advantageResult.dupeCount;
             document.querySelector("#result").textContent = resolution.totalRollValue;
@@ -109,7 +115,7 @@
                     div.innerText = "Critical Success!!"
                 }
                 else {
-                    div.innerText = "Success"
+                    div.innerText = "Success."
                 }
             }
             else{
@@ -118,9 +124,10 @@
                     div.innerText = "Dramatic Failure!!"
                 }
                 else {
-                    div.innerText = "Failure"
+                    div.innerText = "Failure."
                 }
             }
+            div.innerText += `Degree of Success: ${resolution.degree}`;
             resolutionDiv.append(div);
         }
 
@@ -143,6 +150,7 @@
         /**
          * @typedef AdvantageResult
          * @prop {number[]} rolls
+         * @prop {number} largest
          * @prop {number} score
          * @prop {number} dupeCount
          */
@@ -187,20 +195,24 @@
             
             const rolls = rollD6(count);
             console.log("Performing advantage rolls");
-            const sumRolls = sum(rolls);
+            let largest = 0;
             var dupeCount = 0;
             for (var i = 1; i <= 6; i++){
                 const dupeI = rolls.filter(x => x == i).length;
+                if (dupeI){
+                    largest = dupeI
+                }
                 if (dupeI > 1)
                 {
                     dupeCount += dupeI;
                 }
             }
 
-            const score = sumRolls + dupeCount;
+            const score = largest + dupeCount;
             return {
                 rolls,
                 dupeCount,
+                largest,
                 score: differenceResult < 0 ? -score: score
             }
         }
