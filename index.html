@@ -25,50 +25,38 @@
         <input type="range" class="form-range" min="0" max="3" id="tags" onchange="setResolution()">
         <button type="button" class="btn btn-primary" onclick="setResolution()">Evaluate</button>
     </div>
-    <div id="resolution">
-
+    <h1>Episode of Events</h1>
+    <div class="row">
+        <div class="col" id="baseRolls"></div>
     </div>
     <div class="row">
-        <div class="col-9">Sum of Base Rolls</div>
         <div class="col" id="baseSum"></div>
     </div>
     <br>
-    <div class="row">
-        <div class="col-9">Base Rolls</div>
-        <div class="col" id="baseRolls"></div>
-    </div>
     <br>
     <div class="row">
-        <div class="col-9">Advantage Base Value</div>
-        <div class="col" id="advantageBase"></div>
-    </div>
-    <br>
-    <div class="row">
-        <div class="col-9">Advantage Bonus</div>
         <div class="col" id="bonus"></div>
     </div>
     <br>
     <div class="row">
-        <div class="col-9">Advantage Rolls</div>
         <div class="col" id="advantageRolls"></div>
     </div>
     <br>
     <div class="row">
-        <div class="col-9">Advantage Matches</div>
         <div class="col" id="matches"></div>
     </div>
     <br>
     <div class="row">
-        <div class="col-9">Result</div>
         <div class="col" id="result"></div>
     </div>
     <div class="row">
-        <div class="col-9">Target</div>
         <div class="col" id="target"></div>
     </div>
     <div class="row">
-        <div class="col-9"><strong>Degree of Success</strong></div>
         <div class="col"><strong id="degree"></strong></div>
+    </div>
+    <div id="resolution">
+
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
     <script>
@@ -80,16 +68,14 @@
                 powerLevel: Number(document.querySelector("#powerLevel").value),
                 advantages: Number(document.querySelector("#advantages").value),
                 disadvantages: Number(document.querySelector("#disadvantages").value),
-                tags: []
-            }
-            for (let i = 0; i < document.querySelector("#tags").value; i++){
-                options.tags.push(2);
+                tags: Number(document.querySelector("#disadvantages").value) * 2
             }
             console.log(options);
             const targetNumber = 10 + options.difficulty;
             console.log("Performing initial rolls");
             const rolls = rollD10(2);
-            let roll = sum(rolls) + options.stat1 + options.stat2 + options.powerLevel + sum(options.tags ?? []);
+            const baseSum = sum(rolls);
+            let roll = baseSum + options.stat1 + options.stat2 + options.powerLevel + options.tags;
             var advantageResult = getAdvantageResult(options);
             roll += advantageResult.score;
             resolution = {
@@ -98,38 +84,51 @@
                 targetNumber,
                 advantageResult,
                 degree: roll === targetNumber ? 1 : roll - targetNumber,
-                critical: rolls[0] == rolls[1],
+                critical: rolls[0] === rolls[1],
                 success: roll >= targetNumber
             }
             console.log(resolution);
-            document.querySelector("#baseSum").textContent = sum(rolls);
-            document.querySelector("#baseRolls").textContent = resolution.rolls;
-            document.querySelector("#bonus").textContent = resolution.advantageResult.score;
-            document.querySelector("#advantageBase").textContent = resolution.advantageResult.largest;
-            document.querySelector("#advantageRolls").textContent = resolution.advantageResult.rolls;
-            document.querySelector("#matches").textContent = resolution.advantageResult.dupeCount;
-            document.querySelector("#result").textContent = resolution.totalRollValue;
-            document.querySelector("#target").textContent = resolution.targetNumber;
-            document.querySelector("#degree").textContent = resolution.degree;
+            document.querySelector("#baseRolls").textContent = `User rolled ${resolution.rolls}.`;
+            document.querySelector("#baseSum").textContent = `This give a base roll of ${baseSum}.`;
+            if (resolution.critical){
+                document.querySelector("#baseSum").textContent += "\nThe rolls were also a pair, so this result will be CRITICAL/DRAMATIC."
+            }
+            let advantageSituation = "not advantaged";
+            if (resolution.advantageResult.score){
+                advantageSituation = resolution.advantageResult.score > 0 ? "advantaged" : "disadvantaged";
+                document.querySelector("#advantageRolls").textContent = `Calculated based on the user rolled ${resolution.advantageResult.rolls}.`;
+                document.querySelector("#matches").textContent = `Which included ${resolution.advantageResult.dupeCount} duplicate rolls.`;
+            }
+            else {
+                document.querySelector("#advantageRolls").textContent = null;
+                document.querySelector("#matches").textContent = null;
+            }
+            document.querySelector("#bonus").textContent = `User was ${advantageSituation}, with a score of ${resolution.advantageResult.score}.`;
+            document.querySelector("#result").textContent = `Ultimately yielding a final total roll value of Base Rolls (${baseSum}) + Stat 1 (${options.stat1}) + Stat 2 (${options.stat2}) + Tags (${options.tags}) + Advantage/Disadvantage Bonus (${advantageResult.score}) = ${resolution.totalRollValue}.`;
+            document.querySelector("#target").textContent = `Against a Target Number of 10 + Difficulty (${options.difficulty}) = ${resolution.targetNumber}.`;
+            const degreeDiv = document.querySelector("#degree");
+            degreeDiv.textContent = `Giving a degree of success of ${resolution.degree}.`;
             const resolutionDiv = document.querySelector("#resolution");
             resolutionDiv.innerHTML = null;
-            const div = document.createElement("div");
+            const div = document.createElement("strong");
             if (resolution.success){
                 if (resolution.critical){
-                    div.classList.add("h3")
-                    div.innerText = "Critical Success!!"
+                    div.classList.add("h3");
+                    div.style.textTransform = "uppercase";
+                    div.innerText = "Critical Success!!";
                 }
                 else {
-                    div.innerText = "Success."
+                    div.innerText = "Success.";
                 }
             }
             else{
                 if (resolution.critical){
-                    div.classList.add("h3")
-                    div.innerText = "Dramatic Failure!!"
+                    div.classList.add("h3");
+                    div.style.textTransform = "uppercase";
+                    div.innerText = "Dramatic Failure!!";
                 }
                 else {
-                    div.innerText = "Failure."
+                    div.innerText = "Failure.";
                 }
             }
             resolutionDiv.append(div);
@@ -146,7 +145,7 @@
          * @property {number} stat1
          * @property {number} stat2
          * @property {number} powerLevel
-         * @property {number[]?} tags
+         * @property {number} tags
          * @property {number} advantages
          * @property {number} disadvantages
          */
